@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>支付宝demo</title>
+    <head th:replace="common/header :: header"/>
+    <style>
+        .text-danger {
+            width: 233px;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+
+        .img-div {
+            margin-top: 20px;
+        }
+
+        .button-div {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="text-danger">
+    <h1>Hello World!</h1>
+    <div class="img-div">
+        <img th:src="@{/images/2000.gif}" alt="别看了，学不会的！">
+    </div>
+    <div class="button-div">
+        <button id="go-on" class="btn btn-danger" data-loading-text="Loading..." type="button">
+            继续学java
+        </button>
+        <button id="go-home" class="btn btn-info" type="button">
+            回家种地
+        </button>
+    </div>
+</div>
+</body>
+<footer th:replace="common/footer :: footer"/>
+<script>
+    $("#go-on").click(function () {
+        //初始化商品数据
+        $.ajax({
+            url: '/pay/init.php',
+            method: 'post',
+            success: function (response) {
+                console.log(response);
+
+            }
+        });
+
+        $(this).button('loading').delay(1000).queue(function () {
+            $(this).button('reset');
+            $(this).dequeue();
+            window.location.href = '/pay/productindex.php';
+        });
+    });
+    document.querySelector('#go-home').addEventListener('click', function () {
+        var opened = window.open('about:blank', '_self');
+        opened.opener = null;
+        opened.close();
+    });
+
+</script>
+</html>

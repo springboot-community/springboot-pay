@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>订单列表</title>
+    <head th:replace="common/header :: header"/>
+    <style>
+        .o-title {
+            width: 233px;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+<div class="o-title">
+    <h3>订单列表</h3>
+</div>
+<div class="sbc" id="sbc"></div>
+<div class="container">
+    <div class="wrap-table">
+        <table id="bot-table"></table>
+    </div>
+</div>
+
+<!-- 交易退款 -->
+<div class="modal" id="bug-refund">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="font-size:20px ">&times;</span>
+                </button>
+                <h4 class="modal-title" style="display: inline;">交易退款</h4>
+            </div>
+            <form id="productForm" onsubmit="return false;">
+                <div class="modal-body logoBody">
+                    <table style="margin:0 auto;">
+                        <tr>
+                            <td class="tdn">
+                                <span>商品说明：</span>
+                            </td>
+                            <td class="td2">
+                                <span class="zbf-subject"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>支付宝订单号：</span>
+                            </td>
+                            <td class="td2">
+                                <span class="zfb-trade-no"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>商家订单号：</span>
+                            </td>
+                            <td class="td2">
+                                <span class="out-trade-no"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>交易总金额：</span>
+                            </td>
+                            <td class="td2">
+                                <span class="total-amount"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>退款金额：</span>
+                            </td>
+                            <td class="td2">
+                                <input type="number" name="refundFee" class="refund-fee" value=""/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>退款原因：</span>
+                            </td>
+                            <td class="td2">
+                                <input type="text" name="refundReason" class="refund-reason" value=""/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="height:1px;width:100%;"></div>
+                <div class="modal-footer">
+                    <button id="refund-btn" type="button" class="btn btn-primary">
+                        提交
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        关闭
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- 交易方式 -->
+<div class="modal" id="bug-mode">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="font-size:20px ">&times;</span>
+                </button>
+                <h4 class="modal-title" style="display: inline;">交易方式</h4>
+            </div>
+            <form id="pay-mode-form" onsubmit="return false;">
+                <div class="modal-body logoBody">
+                    <div class="form-group" style="margin:0 auto;width: 150px;">
+                        <label class="radio-inline">
+                            <input type="radio" value="1" name="pay-mode" checked>支付宝
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" value="2" name="pay-mode">微信
+                        </label>
+                    </div>
+                </div>
+                <div style="height:1px;width:100%;"></div>
+                <div class="modal-footer">
+                    <button id="buy-model-btn" type="button" class="btn btn-primary">
+                        立即支付
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        关闭
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<form method="post" action="" class="do-buy-form">
+    <input class="order-id" type="hidden" name="orderId" value="">
+</form>
+<input type="hidden" id="refund-fee">
+</body>
+<footer th:replace="common/footer :: footer"/>
+<script>
+    document.querySelector('#refund-btn').addEventListener('click', function () {
+        var refundFee = document.querySelector('.refund-fee').value;
+        var refundReason = document.querySelector('.refund-reason').value;
+        var outTradeNo = document.querySelector('.out-trade-no').innerHTML;
+        var tradeNo = document.querySelector('.zfb-trade-no').innerHTML;
+        var totalAmount = document.querySelector('.total-amount').innerHTML;
+        var fee = document.querySelector('#refund-fee').value;
+        if ((Number(totalAmount) - Number(fee)) < Number(refundFee)) {
+            //退款金额比交易总金额还多
+            document.querySelector('.refund-fee').value = (Number(totalAmount) - Number(fee));
+            return;
+        }
+        if (refundFee < 0) {
+            layer.msg('请输入正确的金额');
+            return;
+        }
+        var data = {
+            outTradeNo: outTradeNo,
+            tradeNo: tradeNo,
+            refundFee: Number(refundFee),
+            refundReason: refundReason
+        };
+        layer.load(2);
+        $.ajax({
+            url: '/alipay/refund.php',
+            method: 'post',
+            data: data,
+            success: function (response) {
+                parent.layer.closeAll();
+                console.log(response);
+                layer.msg(response.message);
+                $('#bot-table').bootstrapTable('refresh');
+            }
+        });
+
+    });
+    document.querySelector('#buy-model-btn').addEventListener('click', function () {
+        var type = document.querySelector("input[name='pay-mode']:checked").value;
+        if (type == "1") {
+            document.querySelector('.do-buy-form').action = '/alipay/doalipay.php';
+        } else if (type == "2") {
+            layer.msg('暂不支持其他付款方式请使用支付宝');
+            return;
+            //document.querySelector('.do-buy-form').action = '/alipay/dowechatpay.php';
+        } else {
+            return;
+        }
+        var form = document.querySelector('.do-buy-form');
+        form.submit();
+    });
+
+
+    var bottableHeight = 550;
+    $('#bot-table').bootstrapTable({
+        height: bottableHeight,
+        striped: true,
+        pagination: true,
+        search: true,
+        pageNumber: 1,
+        cache: false,
+        queryParamsType: 'limit',
+        queryParams: function (params) {
+            var temp = {
+                search: params.search,
+                limit: params.limit,
+                skip: params.offset
+            };
+            return temp;
+        },
+        searchOnEnterKey: true,
+        pageSize: 10,
+        responseHandler: "",
+        pageList: [10, 15, 20, 50, 100],
+        url: '/pay/getorder.php',
+        toolbar: '#sbc',
+        showColumns: true,
+        cardView: false,
+        showToggle: false,
+        showRefresh: true,
+        clickToSelect: true,
+        singleSelect: false,
+        smartDisplay: true,
+        sidePagination: "server",
+        columns: [
+            {
+                field: "stats",
+                checkbox: true
+            },
+            {
+                field: "outTradeNo",
+                title: "商家订单号",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "tradeNo",
+                title: "支付宝订单号",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "subject",
+                title: "订单标题",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            /*{
+                field : "body",
+                title : "订单描述",
+                align : 'center',
+                valign : 'middle',
+                sortable : false
+            },*/
+            {
+                field: "totalAmount",
+                title: "总金额",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "refundFee",
+                title: "退款金额",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "ip",
+                title: "创建IP",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "status",
+                title: "状态",
+                align: 'center',
+                valign: 'middle',
+                sortable: false,
+                formatter: function (value, row, index) {
+                    if (value == "1") {
+                        return "<span class='go-buy btn btn-info' >付款</span>";
+                    } else if (value == "2") {
+                        return "订单关闭";
+                    } else if (value == "3") {
+                        return "支付成功";
+                    } else if (value == "4") {
+                        return "交易完结";
+                    }
+                }
+            },
+            {
+                field: "refund",
+                title: "操作",
+                align: 'center',
+                valign: 'middle',
+                sortable: false,
+                formatter: function (value, row, index) {
+                    if (row.status != "3") {
+                        return "<span class='go-refund btn btn-info' disabled>退款</span>";
+                    } else {
+                        return "<span class='go-refund btn btn-info'>退款</span>";
+                    }
+
+                }
+            }
+        ],
+        onClickCell: function (field, value, row, $element) {
+            if (field == 'refund') {
+                if (row.status == "3") {
+                    document.querySelector('.zbf-subject').innerHTML = row.subject;
+                    document.querySelector('.zfb-trade-no').innerHTML = row.tradeNo;
+                    document.querySelector('.out-trade-no').innerHTML = row.outTradeNo;
+                    document.querySelector('.total-amount').innerHTML = row.totalAmount;
+                    document.querySelector('#refund-fee').value = row.refundFee; //已经退过的金额
+                    $("#bug-refund").modal();
+                }
+            } else if (field == 'status') {
+                if (value == '1') {
+                    var orderId = row.id;
+                    document.querySelector('.order-id').value = orderId;
+                    $("#bug-mode").modal();
+                }
+            }
+
+        },
+        onClickRow: function (row) {
+
+        }
+    });
+
+</script>
+</html>

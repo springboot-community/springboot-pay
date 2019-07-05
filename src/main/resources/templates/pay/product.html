@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>商品列表</title>
+    <head th:replace="common/header :: header"/>
+    <style>
+        .p-title {
+            width: 233px;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+<div class="p-title">
+    <h3>商品列表</h3>
+</div>
+<div class="sbc" id="sbc"></div>
+<div class="container">
+    <div class="wrap-table">
+        <table id="bot-table"></table>
+    </div>
+</div>
+
+<!-- 购入 -->
+<div class="modal" id="bug-product">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="font-size:20px ">&times;</span>
+                </button>
+                <h4 class="modal-title" style="display: inline;">下单买买买~</h4>
+            </div>
+            <form id="productForm" onsubmit="return false;">
+                <div class="modal-body logoBody">
+                    <table style="margin:0 auto;">
+                        <tr>
+                            <td class="tdn">
+                                <span>商品名：</span>
+                            </td>
+                            <td class="td2">
+                                <span class="p-name"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>数量：</span>
+                            </td>
+                            <td class="td2">
+                                <input type="number" name="number" id="buy-num" value=""/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="height:1px;width:100%;"></div>
+                <div class="modal-footer">
+                    <button id="save-order" type="button" class="btn btn-primary">
+                        购入
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        关闭
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- 支付 -->
+<div class="modal" id="do-bug-modal">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="font-size:20px ">&times;</span>
+                </button>
+                <h4 class="modal-title" style="display: inline;">买就完事了兄弟~</h4>
+            </div>
+            <form id="doBugForm" method="post" action="/alipay/doalipay.php">
+                <div class="modal-body logoBody">
+                    <table style="margin:0 auto;">
+                        <tr>
+                            <td class="tdn">
+                                <span>商品</span>
+                            </td>
+                            <td class="tdn">
+                                <span>：</span>
+                            </td>
+                            <td class="tdn">
+                                <span class="do-bug-product"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>数量</span>
+                            </td>
+                            <td class="tdn">
+                                <span>：</span>
+                            </td>
+                            <td class="tdn">
+                                <span class="do-bug-count"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdn">
+                                <span>总价格</span>
+                            </td>
+                            <td class="tdn">
+                                <span>：</span>
+                            </td>
+                            <td class="tdn">
+                                ￥<span class="do-bug-price"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="height:1px;width:100%;"></div>
+                <input type="hidden" name="orderId" class="do-buy-order-id">
+                <div class="modal-footer">
+                    <button id="do-buy-btn" type="submit" class="btn btn-primary">
+                        立即支付
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        关闭
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<input class="inventory-temp" type="hidden" value="">
+<input class="pid-temp" type="hidden" value="">
+</body>
+<footer th:replace="common/footer :: footer"/>
+<script>
+    document.querySelector('#save-order').addEventListener('click', function () {
+        var productId = document.querySelector('.pid-temp').value;
+        var inventory = document.querySelector('.inventory-temp').value;
+        var buyCount = document.querySelector('#buy-num').value;
+        if (inventory < buyCount) {
+            //库存少于购买数 置为最多可购买数
+            document.querySelector('#buy-num').value = inventory;
+            return;
+        }
+        var data = {
+            productId: productId,
+            buyCount: buyCount
+        };
+        $.ajax({
+            url: '/pay/saveorder.php',
+            method: 'post',
+            data: data,
+            success: function (response) {
+                console.log(response);
+                if (response.code == 200) {
+                    document.querySelector('.do-bug-product').innerHTML = response.data.subject;
+                    document.querySelector('.do-bug-price').innerHTML = response.data.totalAmount;
+                    document.querySelector('.do-bug-count').innerHTML = response.data.buyCount;
+                    document.querySelector('.do-buy-order-id').value = response.data.id;
+                    $("#do-bug-modal").modal();
+                } else {
+                    layer.msg(response.status);
+                }
+                $('#bot-table').bootstrapTable('refresh');
+
+            }
+        });
+
+    });
+
+
+    var bottableHeight = 550;
+    $('#bot-table').bootstrapTable({
+        height: bottableHeight,
+        striped: true,
+        pagination: true,
+        search: true,
+        pageNumber: 1,
+        cache: false,
+        queryParamsType: 'limit',
+        queryParams: function (params) {
+            var temp = {
+                search: params.search,
+                limit: params.limit,
+                skip: params.offset
+            };
+            return temp;
+        },
+        searchOnEnterKey: true,
+        pageSize: 10,
+        responseHandler: "",
+        pageList: [10, 15, 20, 50, 100],
+        url: '/pay/getproduct.php',
+        toolbar: '#sbc',
+        showColumns: true,
+        cardView: false,
+        showToggle: false,
+        showRefresh: true,
+        clickToSelect: true,
+        singleSelect: false,
+        smartDisplay: true,
+        sidePagination: "server",
+        columns: [
+            {
+                field: "stats",
+                checkbox: true
+            },
+            {
+                field: "name",
+                title: "商品名称",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "price",
+                title: "商品价格",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "inventory",
+                title: "商品库存",
+                align: 'center',
+                valign: 'middle',
+                sortable: false
+            },
+            {
+                field: "buy",
+                title: "购入",
+                align: 'center',
+                valign: 'middle',
+                sortable: false,
+                formatter: function (value, row, index) {
+                    return "<span class='go-buy btn btn-info' >下单</span>";
+                }
+            }
+        ],
+        onClickCell: function (field, value, row, $element) {
+            if (field == 'buy') {
+                document.querySelector(".p-name").innerHTML = row.name;
+                $("#bug-product").modal();
+                document.querySelector('.inventory-temp').value = row.inventory;
+                document.querySelector('.pid-temp').value = row.uid;
+                document.querySelector('#buy-num').value = "";
+            }
+        },
+        onClickRow: function (row) {
+
+        }
+    });
+</script>
+</html>

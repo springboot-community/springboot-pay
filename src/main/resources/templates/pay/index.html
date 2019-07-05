@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>支付宝demo</title>
+    <head th:replace="common/header :: header"/>
+    <style>
+        .text-danger{ width: 233px; margin: 0 auto; margin-top: 50px; }
+        .img-div{ width: 450px; margin: 0 auto; margin-top:20px ; }
+        .img-div img{ width: 400px; }
+        .button-div{ width: 300px; margin: 0 auto; margin-top:20px ; }
+    </style>
+</head>
+<body>
+<div class="text-danger">
+    <h1>支付成功了</h1>
+</div>
+    <div class="img-div">
+        <img th:src="@{/images/gohome.jpg}" alt="别看了，学不会的！">
+    </div>
+    <div class="button-div">
+        <a id="go-product-list" class="btn btn-info" type="button" href="/pay/productindex.php">
+            产品列表
+        </a>
+        <a id="go-order-list" class="btn btn-danger" type="button" href="/pay/orderindex.php">
+            订单列表
+        </a>
+        <button id="go-home" class="btn btn-success" type="button">
+            回家种地
+        </button>
+    </div>
+
+</body>
+<footer th:replace="common/footer :: footer"/>
+<script>
+    document.querySelector('#go-home').addEventListener('click', function () {
+        var opened = window.open('about:blank','_self');
+        opened.opener=null;
+        opened.close();
+    });
+</script>
+</html>

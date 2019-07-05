@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <property name="APP_NAME" value="alipay" />
+	<property name="LOG_HOME" value="/home/wxm/log" />
+	
+	<contextName>${APP_NAME}</contextName>
+    
+    
+	<logger name="org.mongodb.driver" level="OFF"/>
+
+    <property name="LEVEL-1" value="DEBUG"/>
+    <property name="LEVEL-2" value="INFO"/>
+    <property name="PATTERN-1" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+    <property name="PATTERN-2" value="[%-5p][%thread][%d{yyy-MM-dd HH:mm:ss}][%C %M][%L] %m%n"/>
+
+
+    <appender name="ROOT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN-2}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <target>System.out</target>
+    </appender>
+	
+	
+	<!-- 日志文件输出 -->
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>${LOG_HOME}/${APP_NAME}.all.log</file>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${PATTERN-2}</pattern>
+		</encoder>
+	</appender>
+
+   <root level="${LEVEL-1}">
+        <appender-ref ref="ROOT"/>
+    </root>
+</configuration>
