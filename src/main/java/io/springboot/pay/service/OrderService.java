@@ -64,6 +64,25 @@ public class OrderService implements IOrder {
     public String getOrderList(int skip, int limit, String search) {
         Query query = new Query();
         if (search != "") {
+        	if (search.contains("(") || search.contains(")")) {
+				StringBuffer sb = new StringBuffer(search);
+				int kh1 = 0;
+				for (int i = 0; i < search.length(); i++) {
+					if (search.charAt(i) == '(') {
+						sb.insert(i + kh1, "\\");
+						kh1++;
+					}
+				}
+				int kh2 = 0;
+				String str = sb.toString();
+				for (int i = 0; i < str.length(); i++) {
+					if (str.charAt(i) == ')') {
+						sb.insert(i + kh2, "\\");
+						kh2++;
+					}
+				}
+				search = sb.toString();
+			}
             Criteria criteria = new Criteria();
             Pattern pattern = Pattern.compile("^.*" + search + ".*$", Pattern.CASE_INSENSITIVE); //正常应该使用精确匹配效率更高
             query.addCriteria(
