@@ -60,11 +60,12 @@ public class OrderService implements IOrder {
         }
     }
 
-    @Override
-    public String getOrderList(int skip, int limit, String search) {
-        Query query = new Query();
-        if (search != "") {
-        	if (search.contains("(") || search.contains(")")) {
+	@Override
+	public String getOrderList(int skip, int limit, String search) {
+		Query query = new Query();
+		if (search != "") {
+			// 小写括号下方的正则需要转义
+			if (search.contains("(") || search.contains(")")) {
 				StringBuffer sb = new StringBuffer(search);
 				int kh1 = 0;
 				for (int i = 0; i < search.length(); i++) {
@@ -83,15 +84,11 @@ public class OrderService implements IOrder {
 				}
 				search = sb.toString();
 			}
-            Criteria criteria = new Criteria();
-            Pattern pattern = Pattern.compile("^.*" + search + ".*$", Pattern.CASE_INSENSITIVE); //正常应该使用精确匹配效率更高
-            query.addCriteria(
-                    criteria.orOperator(
-                            Criteria.where("out_trade_no").regex(pattern),
-                            Criteria.where("trade_no").regex(pattern)
-                    )
-            );
-        }
+			Criteria criteria = new Criteria();
+			Pattern pattern = Pattern.compile("^.*" + search + ".*$", Pattern.CASE_INSENSITIVE); // 正常应该使用精确匹配效率更高
+			query.addCriteria(criteria.orOperator(Criteria.where("out_trade_no").regex(pattern),
+					Criteria.where("trade_no").regex(pattern)));
+		}
         long total = mongoTemplate.count(query, Order.class);
         query.skip(skip).limit(limit);
         List<Order> orderList = mongoTemplate.find(query, Order.class);
